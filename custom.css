@@ -1,3 +1,7 @@
+.reveal p {
+  font-size: 80%;
+}
+
 .reveal .slides section {
   text-align: left;
 }
