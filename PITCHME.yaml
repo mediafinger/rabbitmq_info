@@ -5,6 +5,7 @@
 # https://github.com/gitpitch/gitpitch/wiki/Slideshow-Settings
 #
 theme : beige
+theme-override : custom.css
 # theme-override : assets/css/PITCHME.css
 # theme-override : assets/css/PITCHME.codemax.css
 logo : none
