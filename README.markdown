@@ -1,6 +1,8 @@
 # RabbitMQ
 
-A how-to about _publishing_, _routing_ and _consuming_ messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP). RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+A how-to about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP). RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+
+### Alternative Protocols
 
 While this how-to focuses on RabbitMQ's AMQP implementation only, it goes to mention that RabbitMQ also features implementations of a few other messaging protocols that can be used for special use cases.
 * MQTT a lightweight protocol often used to implement pub-sub patterns with mobile devices
@@ -11,7 +13,7 @@ While this how-to focuses on RabbitMQ's AMQP implementation only, it goes to men
 
 ## Publishing messages
 
-When publishing messages, RabbitMQ offers multiple methods to pick from. Each choice is a trade-off between speed and security that messages have really been delivered. All options can be combined to find the sweet spot for the type of messages being send on a specific queue.
+When publishing messages, RabbitMQ offers multiple methods to pick from. Each choice is a **trade-off between speed and security** that messages have really been delivered. All options can be combined to find the sweet spot for the type of messages being send on a specific queue.
 
 This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the alternatives offer more lightweight and less complex methods to achieve the same goals.
 
@@ -28,13 +30,13 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 * confirmation is send asynchronously
 * if the message can't be routed, a `nack` is returned
 
-### High availability (HA) queues (in clustered mode only)
+### High availability (HA) queues
 
+* a cluster is mandatory to use HA queues
 * messages will be handled on all servers of the cluster that handle the HA queue
 * if a node goes down, the message does still exist on the other nodes
-* this can replace slow persistence to disk in most cases
+* this can replace slow persistence to disk in many cases
 * once it is consumed from any node in the cluster, all copies will be removed
-* using a cluster is mandatory to have a redundant system
 * clusters can be connected in different ways, this is a topic of its own
 
 ### Persisted, slowest but most secure
@@ -51,9 +53,10 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 
 ## Consuming messages
 
-When consuming messages, RabbitMQ offers multiple methods to pick from. Each choice is a trade-off between speed and security that messages have really been consumed.
+When consuming messages, RabbitMQ offers multiple methods to pick from. Each choice is a **trade-off between speed and security** that messages have really been consumed.
 
-This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the alternatives offer more lightweight and less complex methods to achieve the same goals.  
+This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the alternatives offer more lightweight and less complex methods to achieve the same goals.
+
 It also skips the `get` pattern, as the performance is worse compared to `consuming` messages. At the same time it does not offer benefits over the available alternatives.
 
 ### Fastest, no guarantees
@@ -99,8 +102,12 @@ If it's not about pure notifications, but information that has to reach the cust
 
 A customer changes his personal data on one system and it has to inform other application about it. In this case the choice of methods depends heavily on how important it is for the other applications to have the latest data.
 
-An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer. You could send messages with _publishing confirmation_ and no further guarantees.  
+An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer. You could send messages with _publishing confirmation_ and no further guarantees.
+
+#### Data changes
+
 However you will need a strategy to create consistency eventually. Maybe a job that sends messages every night for each customer whose data changed in the last 24h. As you might have less system load at night, using a _QoS level_ might give you the guarantees you need.
+
 Nevertheless the same tool might expect to always be immediately informed about changes in the payment data or email address. In this case you would need to pick more secure messaging strategies like a _HA queue_ and _manual `ack`_ after message delivery.
 
 ### Money transfers
@@ -171,6 +178,8 @@ RabbitMQ provides other types of exchanges through plugins to enable special use
 
 ### Handling failure
 
+TODO: retries and final failure
+
 #### Alternate exchanges
 
 When a published message can not be routed by the broker.
@@ -194,17 +203,17 @@ When a queued message expires or is rejected by the consumer.
 
 ## Routing examples
 
-In a _fanout exchange_ all queues will receive all messages. This burdens the consumers of this queues with handling all kind of messages, when different kinds of messages are sent to such an exchange.
+In a **fanout exchange** all queues will receive all messages. This burdens the consumers of this queues with handling all kind of messages, when different kinds of messages are sent to such an exchange.
 
-In a _direct exchange_ every queue bound to the exact `routing_key` of a message, will receive this message. When multiple queues are bound to the same `routing_key` the message will be routed to all of these queues. A message will only be removed from the system, when it was delivered in all bound queues.
+In a **direct exchange** every queue bound to the exact `routing_key` of a message, will receive this message. When multiple queues are bound to the same `routing_key` the message will be routed to all of these queues. A message will only be removed from the system, when it was delivered in all bound queues.
 
-A _headers exchange_ allows for more flexible routing, similar to a _topics exchange_. Instead of analyzing the routing key, it matches `key-value` pairs of the `headers` `property` of messages.
+A **headers exchange** allows for more flexible routing, similar to a _topics exchange_. Instead of analyzing the routing key, it matches `key-value` pairs of the `headers` `property` of messages.
 
 ### Topic exchange
 
 The most flexible routing is implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
 
-### Routing keys
+### Routing keys pattern
 
 | Applications    | Entities | Events     |
 |:----------------|:---------|:-----------|
@@ -214,6 +223,8 @@ The most flexible routing is implemented through the **topic exchange.** It is e
 | notifications   | transfer | updated    |
 | admin           |          | deleted    |
 | webui           |          | error      |
+
+### Routing keys examples
 
 The above list would allow for `routing.keys` like the following:
 
@@ -226,51 +237,65 @@ The above list would allow for `routing.keys` like the following:
 
 ### Binding queues to routing keys
 
-Queues are bound to a pattern or the exact string:
+Queues are bound to a pattern or the exact string.
 
-| Routing-key                    | Explanation                                            | Possible Consumers         |
-|:-------------------------------|:-------------------------------------------------------|:---------------------------|
-| `registrations.#`              | every message of the `registrations` app               | Customer care              |
-| `identifications.*.successful` | matches `person` and `business` entities of this event | Download ID, Notifications |
-| `banking.account.created`      | a message when this exact `routing.key` is used        | Audits, Notifications      |
-| `banking.transfer.*`           | `banking.transfer` messages of any event type          | Audits, Banking provider   |
-| `#.error`                      | all `error` events from all apps and of any entity     | Alerts                     |
-| `#`                            | all messages                                           | Logs                       |
+Messages can be delivered to multiple queues that can have one or more consumers each.
 
-Messages can be delivered to multiple queues that can have one or more consumers each.  
-In this example the consumers _Audits_ and _Notifications_ consume multiple queues.  
+
+In this example the consumers _Audits_ and _Notifications_ consume multiple queues.
+
+
+### Binding examples
+
+| Routing-key                    | Explanation                                 | Consumers                  |
+|:-------------------------------|:--------------------------------------------|:---------------------------|
+| `registrations.#`              | every message of the `registrations` app    | Customer care              |
+| `identifications.*.successful` | matches all entities with this event        | Download ID, Notifications |
+| `banking.account.created`      | when the exact `routing.key` matches        | Audits, Notifications      |
+| `banking.transfer.*`           | `banking.transfer` of any event type        | Audits, Banking-API        |
+| `#.error`                      | all `error` events of all apps and entities | Alerts                     |
+| `#`                            | all messages                                | Logs                       |
 
 ---
 
 ## Messages
 
-When discussing publishing, routing and consumption of messages, parameters like the routing key have been mentioned. The routing information and arguments, are part of the _method frame._ Together with the _content header frame_ and the _body frame_ it represents a full AMQP message.
+When discussing publishing, routing and consumption of messages, parameters like the routing key have been mentioned. The _routing information and arguments_, are part of the **method frame.** The **content header frame** contains the _size and the properties_ of a message. The _payload_ is contained in the **body frame.**
 
-### Headers
+Together the three frames represent a full AMQP message.
 
-The _content header frame_ contains the size and the properties of a message.
+### Message properties
 
-| Property           | Type      | Used by      | Use case                                                                  |
-|:-------------------|:----------|:-------------|:--------------------------------------------------------------------------|
-| `app_id`           | String    | Application  | use it to describe the publisher                                          |
-| `content-encoding` | String    | Application  | in case compression is used `gzip`, `zlib` or encoded content `Base64`    |
-| `content-type`     | String    | Application  | mime-type of the message body `application/json`                          |
-| `type`             | String    | Application  | use it to describe message or payload                                     |
-|                    |           |              |                                                                           |
-| `headers`          | Hash      | Rabbit & App | key-value table to store any additional metadata, can be used for routing |
-| `message_id`       | String    | Application  | typically a UUID                                                          |
-| `correlation_id`   | String    | Application  | typically used to reference a message_id when sending a response          |
-|                    |           |              |                                                                           |
-| `delivery-mode`    | 1 or 2    | RabbitMQ     | 1 = keep message in memory, 2 = persist to disk                           |
-| `timestamp`        | timestamp | Application  | Unix epoch timestamp in seconds, use `Time.now.utc.to_i`                  |
-|                    |           |              |                                                                           |
-| `expiration`       | String    | RabbitMQ     | one way to set an expiration date, a timestamp in seconds but as String   |
-| `priority`         | 0..9      | RabbitMQ     | 0 has highest priority, don't set or manipulate the value                 |
-| `user_id`          | String    | RabbitMQ     | identify message was sent by logged-in user, don't manipulate it          |
+| Property           | Type      | Used by     | Use case                                                               |
+|:-------------------|:----------|:------------|:-----------------------------------------------------------------------|
+| `app_id`           | String    | Application | use it to describe the publisher                                       |
+| `content-encoding` | String    | Application | in case compression is used `gzip`, `zlib` or encoded content `Base64` |
+| `content-type`     | String    | Application | mime-type of the message body `application/json`                       |
+| `message_id`       | String    | Application | typically a UUID                                                       |
+| `timestamp`        | timestamp | Application | Unix epoch timestamp in seconds, use `Time.now.utc.to_i`               |
+| `type`             | String    | Application | use it to describe message or payload                                  |
+
+### Properties that (can) influence routing
+
+| Property         | Type   | Used by      | Use case                                                                  |
+|:-----------------|:-------|:-------------|:--------------------------------------------------------------------------|
+| `correlation_id` | String | Application  | typically used to reference a message_id when sending a response          |
+| `delivery-mode`  | 1 or 2 | RabbitMQ     | 1 = keep message in memory, 2 = persist to disk                           |
+| `expiration`     | String | RabbitMQ     | one way to set an expiration date, a timestamp in seconds but as String   |
+| `headers`        | Hash   | Rabbit & App | key-value table to store any additional metadata, can be used for routing |
+
+### Advanced Properties
+
+Usually you don't want to change the following properties.
+
+| Property   | Type   | Used by  | Use case                                                         |
+|:-----------|:-------|:---------|:-----------------------------------------------------------------|
+| `priority` | 0..9   | RabbitMQ | 0 has highest priority, don't set or manipulate the value        |
+| `user_id`  | String | RabbitMQ | identify message was sent by logged-in user, don't manipulate it |
 
 ### Payload
 
-They payload is contained in the _body frame._ When the size of the payload exceeds the maximum size of a message frame, it will be split over multiple _body frames_. The form of the payload is described by the `content-type` and `content-encoding` _header properties_.
+They payload is contained in the **body frame.** When the size of the payload exceeds the maximum size of a message frame, it will be split over multiple **body frames**. The form of the payload is described by the `content-type` and `content-encoding` _header properties_.
 
 Consumers should decode and deserialize the message body, to make it easier for the application to handle messages.
 
@@ -303,19 +328,45 @@ TODO:
 
 ## Clients
 
-To comfortably use AMQP with the RabbitMQ extensions, there are clients for basically all modern languages.
+To comfortably use **AMQP** with the RabbitMQ extensions, there are clients for basically all modern languages.
 
-### Ruby: bunny
+A list of the most popular clients for a few popular languages:
+
+### Ruby
+
+The **bunny** gem
 
 https://github.com/ruby-amqp/bunny
 
-### Elixir: amqp
+### Elixir
+
+The **amqp** hex package
 
 https://github.com/pma/amqp
 
-### Go: amqp
+### Go
+
+The **amqp** library
 
 https://github.com/streadway/amqp
+
+### Java
+
+The **JMS** client
+
+https://github.com/rabbitmq/rabbitmq-jms-client
+
+### JavaScript / Node
+
+The **amqp.node** library
+
+https://github.com/squaremo/amqp.node
+
+### Rust
+
+The **rust-amqp** library
+
+https://github.com/Antti/rust-amqp
 
 ---
 
@@ -331,4 +382,14 @@ https://github.com/streadway/amqp
 
 ---
 
-Assembled by **Andreas Finger** in February 2018 in Barcelona :: [@mediafinger](http://mediafinger.com) on [Github](https://github.com/mediafinger) and [Twitter](https://twitter.com/mediafinger)
+## Thanks for reading!
+
+Assembled by **Andreas Finger** in February 2018 in Barcelona
+
+[@mediafinger](http://mediafinger.com)
+
+on [Github](https://github.com/mediafinger)
+
+and [Twitter](https://twitter.com/mediafinger)
+
+This presentation: https://github.com/mediafinger/rabbitmq_info/README.markdown
