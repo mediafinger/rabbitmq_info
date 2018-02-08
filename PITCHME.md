@@ -34,13 +34,13 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 * if the message can't be routed, a `nack` is returned
 
 +++
-### High availability (HA) queues (in clustered mode only)
+### High availability (HA) queues
 
+* a cluster is mandatory to use HA queues
 * messages will be handled on all servers of the cluster that handle the HA queue
 * if a node goes down, the message does still exist on the other nodes
-* this can replace slow persistence to disk in most cases
+* this can replace slow persistence to disk in many cases
 * once it is consumed from any node in the cluster, all copies will be removed
-* using a cluster is mandatory to have a redundant system
 * clusters can be connected in different ways, this is a topic of its own
 
 +++
@@ -60,7 +60,8 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 
 When consuming messages, RabbitMQ offers multiple methods to pick from. Each choice is a trade-off between speed and security that messages have really been consumed.
 
-This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the alternatives offer more lightweight and less complex methods to achieve the same goals.  
+This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the alternatives offer more lightweight and less complex methods to achieve the same goals.
+
 It also skips the `get` pattern, as the performance is worse compared to `consuming` messages. At the same time it does not offer benefits over the available alternatives.
 
 +++
@@ -112,8 +113,10 @@ If it's not about pure notifications, but information that has to reach the cust
 
 A customer changes his personal data on one system and it has to inform other application about it. In this case the choice of methods depends heavily on how important it is for the other applications to have the latest data.
 
-An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer. You could send messages with _publishing confirmation_ and no further guarantees.  
+An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer. You could send messages with _publishing confirmation_ and no further guarantees.
+
 However you will need a strategy to create consistency eventually. Maybe a job that sends messages every night for each customer whose data changed in the last 24h. As you might have less system load at night, using a _QoS level_ might give you the guarantees you need.
+
 Nevertheless the same tool might expect to always be immediately informed about changes in the payment data or email address. In this case you would need to pick more secure messaging strategies like a _HA queue_ and _manual `ack`_ after message delivery.
 
 +++
@@ -255,7 +258,16 @@ The above list would allow for `routing.keys` like the following:
 +++
 ### Binding queues to routing keys
 
-Queues are bound to a pattern or the exact string:
+Queues are bound to a pattern or the exact string.
+
+Messages can be delivered to multiple queues that can have one or more consumers each.
+
+
+In this example the consumers _Audits_ and _Notifications_ consume multiple queues.
+
+
++++
+### Binding examples
 
 | Routing-key                    | Explanation                                            | Possible Consumers         |
 |:-------------------------------|:-------------------------------------------------------|:---------------------------|
@@ -265,9 +277,6 @@ Queues are bound to a pattern or the exact string:
 | `banking.transfer.*`           | `banking.transfer` messages of any event type          | Audits, Banking provider   |
 | `#.error`                      | all `error` events from all apps and of any entity     | Alerts                     |
 | `#`                            | all messages                                           | Logs                       |
-
-Messages can be delivered to multiple queues that can have one or more consumers each.  
-In this example the consumers _Audits_ and _Notifications_ consume multiple queues.  
 
 ---
 
