@@ -303,13 +303,90 @@ Consumers should decode and deserialize the message body, to make it easier for 
 
 ## Code Examples
 
-### Setting up a topic exchange and binding queues to it
+All code examples are written in Ruby and `require "bunny"`.
 
-### Publishing messages with different settings
+They also need a running RabbitMQ broker.
 
-### Consuming messages
+### Setting up a topic exchange and binding queues to it (TODO)
 
-### Handling errors
+
+#### Open connection and create channel for publisher
+
+```ruby
+url = "amqp://guest:guest@localhost:5672/%2F"
+connection = Bunny.new(url)
+connection.start
+channel = connection.create_channel
+```
+
+#### Declare exchange and queue and bind them
+
+```ruby
+exchange = Bunny::Exchange.new(channel, :topic, "first_exchange")
+queue = channel.queue("handle_it", auto_delete: false, durable: true)
+queue.bind(exchange, "example.routing.key")
+```
+
+#### Publish messages to the exchange
+
+```ruby
+12.times do |i|
+  exchange.publish(
+    "hello-#{i}", routing_key: "example.routing.key",
+    message_id: "m-#{i}", timestamp: Time.now.utc.to_i
+  )
+end
+```
+
+#### Open connection and create channel for consumer
+
+```ruby
+url = "amqp://guest:guest@localhost:5672/%2F"
+connection = Bunny.new(url)
+connection.start
+channel = connection.create_channel
+channel = connection.channel
+```
+
+#### Create consumer for queue
+
+```ruby
+queue = declare_queue("handle_it")
+consumer_tag = "consumer-007"
+consumer = Bunny::Consumer.new(channel, queue, consumer_tag, no_ack = true, exclusive = false, arguments = {})
+```
+
+#### Subscribe consumer to queue
+
+```ruby
+consumer.on_delivery do |delivery_info, properties, payload|
+  puts properties.timestamp     
+  puts properties.message_id  
+  puts delivery_info.routing_key
+  puts delivery_info.exchange    
+
+  puts payload
+  puts "---"
+end
+
+queue.subscribe_with(consumer)
+```
+
+#### Take a break / close connection
+
+```ruby
+channel.basic_cancel(consumer_tag)
+queue.subscribe_with(consumer)
+
+channel.basic_cancel(consumer_tag)
+channel.close
+```
+
+### Publishing messages with different settings (TODO)
+
+### Consuming messages (TODO)
+
+### Handling errors (TODO)
 
 ---
 
@@ -392,4 +469,4 @@ on [Github](https://github.com/mediafinger)
 
 and [Twitter](https://twitter.com/mediafinger)
 
-This presentation: https://github.com/mediafinger/rabbitmq_info/README.markdown
+This presentation: https://github.com/mediafinger/rabbitmq_info
