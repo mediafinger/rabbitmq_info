@@ -5,3 +5,7 @@
 .reveal .slides section {
   text-align: left;
 }
+
+#title-footer #notification {
+  font-size: 70%;
+}
