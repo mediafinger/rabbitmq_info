@@ -314,16 +314,28 @@ They also need a running RabbitMQ broker.
 
 ```ruby
 url = "amqp://guest:guest@localhost:5672/%2F"
+
 connection = Bunny.new(url)
 connection.start
+
 channel = connection.create_channel
 ```
 
 #### Declare exchange and queue and bind them
 
 ```ruby
-exchange = Bunny::Exchange.new(channel, :topic, "first_exchange")
-queue = channel.queue("handle_it", auto_delete: false, durable: true)
+exchange = Bunny::Exchange.new(
+  channel,
+  :topic,
+  "first_exchange"
+)
+
+queue = channel.queue(
+  "handle_it",
+  auto_delete: false,
+  durable: true
+)
+
 queue.bind(exchange, "example.routing.key")
 ```
 
@@ -332,8 +344,10 @@ queue.bind(exchange, "example.routing.key")
 ```ruby
 12.times do |i|
   exchange.publish(
-    "hello-#{i}", routing_key: "example.routing.key",
-    message_id: "m-#{i}", timestamp: Time.now.utc.to_i
+    "hello-#{i}",
+    routing_key: "example.routing.key",
+    message_id:  "m-#{i}",
+    timestamp:   Time.now.utc.to_i
   )
 end
 ```
@@ -342,8 +356,10 @@ end
 
 ```ruby
 url = "amqp://guest:guest@localhost:5672/%2F"
+
 connection = Bunny.new(url)
 connection.start
+
 channel = connection.create_channel
 channel = connection.channel
 ```
@@ -352,8 +368,17 @@ channel = connection.channel
 
 ```ruby
 queue = declare_queue("handle_it")
+
 consumer_tag = "consumer-007"
-consumer = Bunny::Consumer.new(channel, queue, consumer_tag, no_ack = true, exclusive = false, arguments = {})
+
+consumer = Bunny::Consumer.new(
+  channel,
+  queue,
+  consumer_tag,
+  true,  # no_ack == no automatic ack == manual ack
+  false, # exclusive
+  {}     # arguments
+)
 ```
 
 #### Subscribe consumer to queue
@@ -361,12 +386,12 @@ consumer = Bunny::Consumer.new(channel, queue, consumer_tag, no_ack = true, excl
 ```ruby
 consumer.on_delivery do |delivery_info, properties, payload|
   puts properties.timestamp     
-  puts properties.message_id  
+  puts properties.message_id
+
   puts delivery_info.routing_key
   puts delivery_info.exchange    
 
   puts payload
-  puts "---"
 end
 
 queue.subscribe_with(consumer)
