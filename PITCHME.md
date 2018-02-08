@@ -1,6 +1,9 @@
 # RabbitMQ
 
-A how-to about _publishing_, _routing_ and _consuming_ messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP). RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+A how-to about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP). RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+
++++
+### Alternative Protocols
 
 While this how-to focuses on RabbitMQ's AMQP implementation only, it goes to mention that RabbitMQ also features implementations of a few other messaging protocols that can be used for special use cases.
 * MQTT a lightweight protocol often used to implement pub-sub patterns with mobile devices
@@ -226,7 +229,7 @@ A _headers exchange_ allows for more flexible routing, similar to a _topics exch
 The most flexible routing is implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
 
 +++
-### Routing keys
+### Routing keys pattern
 
 | Applications    | Entities | Events     |
 |:----------------|:---------|:-----------|
@@ -236,6 +239,9 @@ The most flexible routing is implemented through the **topic exchange.** It is e
 | notifications   | transfer | updated    |
 | admin           |          | deleted    |
 | webui           |          | error      |
+
++++
+### Routing keys examples
 
 The above list would allow for `routing.keys` like the following:
 
@@ -267,30 +273,41 @@ In this example the consumers _Audits_ and _Notifications_ consume multiple queu
 
 ## Messages
 
-When discussing publishing, routing and consumption of messages, parameters like the routing key have been mentioned. The routing information and arguments, are part of the _method frame._ Together with the _content header frame_ and the _body frame_ it represents a full AMQP message.
+When discussing publishing, routing and consumption of messages, parameters like the routing key have been mentioned. The _routing information and arguments_, are part of the **method frame.** The **content header frame** contains the _size and the properties_ of a message. The _payload_ is contained in the **body frame.**
+
+Together the three frames represent a full AMQP message.
 
 +++
-### Headers
+### Message properties
 
-The _content header frame_ contains the size and the properties of a message.
+| Property           | Type      | Used by     | Use case                                                               |
+|:-------------------|:----------|:------------|:-----------------------------------------------------------------------|
+| `app_id`           | String    | Application | use it to describe the publisher                                       |
+| `content-encoding` | String    | Application | in case compression is used `gzip`, `zlib` or encoded content `Base64` |
+| `content-type`     | String    | Application | mime-type of the message body `application/json`                       |
+| `message_id`       | String    | Application | typically a UUID                                                       |
+| `timestamp`        | timestamp | Application | Unix epoch timestamp in seconds, use `Time.now.utc.to_i`               |
+| `type`             | String    | Application | use it to describe message or payload                                  |
 
-| Property           | Type      | Used by      | Use case                                                                  |
-|:-------------------|:----------|:-------------|:--------------------------------------------------------------------------|
-| `app_id`           | String    | Application  | use it to describe the publisher                                          |
-| `content-encoding` | String    | Application  | in case compression is used `gzip`, `zlib` or encoded content `Base64`    |
-| `content-type`     | String    | Application  | mime-type of the message body `application/json`                          |
-| `type`             | String    | Application  | use it to describe message or payload                                     |
-|                    |           |              |                                                                           |
-| `headers`          | Hash      | Rabbit & App | key-value table to store any additional metadata, can be used for routing |
-| `message_id`       | String    | Application  | typically a UUID                                                          |
-| `correlation_id`   | String    | Application  | typically used to reference a message_id when sending a response          |
-|                    |           |              |                                                                           |
-| `delivery-mode`    | 1 or 2    | RabbitMQ     | 1 = keep message in memory, 2 = persist to disk                           |
-| `timestamp`        | timestamp | Application  | Unix epoch timestamp in seconds, use `Time.now.utc.to_i`                  |
-|                    |           |              |                                                                           |
-| `expiration`       | String    | RabbitMQ     | one way to set an expiration date, a timestamp in seconds but as String   |
-| `priority`         | 0..9      | RabbitMQ     | 0 has highest priority, don't set or manipulate the value                 |
-| `user_id`          | String    | RabbitMQ     | identify message was sent by logged-in user, don't manipulate it          |
++++
+### Properties that (can) influence routing
+
+| Property         | Type   | Used by      | Use case                                                                  |
+|:-----------------|:-------|:-------------|:--------------------------------------------------------------------------|
+| `correlation_id` | String | Application  | typically used to reference a message_id when sending a response          |
+| `delivery-mode`  | 1 or 2 | RabbitMQ     | 1 = keep message in memory, 2 = persist to disk                           |
+| `expiration`     | String | RabbitMQ     | one way to set an expiration date, a timestamp in seconds but as String   |
+| `headers`        | Hash   | Rabbit & App | key-value table to store any additional metadata, can be used for routing |
+
++++
+### Advanced Properties
+
+Usually you don't want to change the following properties.
+
+| Property   | Type   | Used by  | Use case                                                         |
+|:-----------|:-------|:---------|:-----------------------------------------------------------------|
+| `priority` | 0..9   | RabbitMQ | 0 has highest priority, don't set or manipulate the value        |
+| `user_id`  | String | RabbitMQ | identify message was sent by logged-in user, don't manipulate it |
 
 +++
 ### Payload
