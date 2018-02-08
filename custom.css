@@ -2,6 +2,15 @@
   font-size: 80%;
 }
 
+.reveal td {
+  font-size: 70%;
+}
+
+.reveal li {
+  font-size: 80%;
+  padding-bottom: 8px;
+}
+
 .reveal .slides section {
   text-align: left;
 }
