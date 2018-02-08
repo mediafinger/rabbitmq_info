@@ -274,12 +274,12 @@ In this example the consumers _Audits_ and _Notifications_ consume multiple queu
 +++
 ### Binding examples
 
-| Routing-key                    | Explanation                                 | Possible Consumers         |
+| Routing-key                    | Explanation                                 | Consumers                  |
 |:-------------------------------|:--------------------------------------------|:---------------------------|
 | `registrations.#`              | every message of the `registrations` app    | Customer care              |
 | `identifications.*.successful` | matches all entities with this event        | Download ID, Notifications |
-| `banking.account.created`      | when the exact `routing.key` is equal       | Audits, Notifications      |
-| `banking.transfer.*`           | `banking.transfer` of any event type        | Audits, Banking provider   |
+| `banking.account.created`      | when the exact `routing.key` matches        | Audits, Notifications      |
+| `banking.transfer.*`           | `banking.transfer` of any event type        | Audits, Banking-API        |
 | `#.error`                      | all `error` events of all apps and entities | Alerts                     |
 | `#`                            | all messages                                | Logs                       |
 
@@ -432,3 +432,5 @@ Assembled by **Andreas Finger** in February 2018 in Barcelona
 on [Github](https://github.com/mediafinger)
 
 and [Twitter](https://twitter.com/mediafinger)
+
+This presentation: https://github.com/mediafinger/rabbitmq_info/README.markdown
