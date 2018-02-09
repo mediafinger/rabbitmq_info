@@ -1,11 +1,34 @@
 # RabbitMQ
 
-A how-to about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP). RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+A how-to about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
+
+RabbitMQ is a high performance message broker based on AMQP. Using the broker architecture it can be scaled independently. Applications use it over client libraries.
+
+### Decoupling services
+
+Decoupling services by introducing an asynchronous messaging system between them, allows to scale systems independently. The message broker distributes messages and can in this process throttle the load towards the message receiving systems. This can reduce failure rate in peak times and at the same time speed up the systems sending messages, as they are no longer blocked by waiting for an answer of a potentially slow system. This can go as far as decoupling your database writes.
+
+The message broker inform multiple systems about changes and events. This allows to add new functionality seamlessly. It can replicate data and events to data centers in other regions to achieve high availability.
+
+Extracting parts of an application to a new service becomes simpler. No URLs have to be adapted, instead add a new subscriber to a message queue.
+
+### Features and benefits
+
+* Open source, maintained by Pivotal Software Inc
+* written in Erlang
+* lightweight, but powerful
+* very flexible in controlling trade-offs between reliable message throughput and performance
+* plugins to extend core-functionality
+* layers of security
+* clients libraries for most modern languages exist
 
 ### Alternative Protocols
 
-While this how-to focuses on RabbitMQ's AMQP implementation only, it goes to mention that RabbitMQ also features implementations of a few other messaging protocols that can be used for special use cases.
-* MQTT a lightweight protocol often used to implement pub-sub patterns with mobile devices
+RabbitMQ features a full implementation of AMQP 0.9.1 as well as several custom additions over it.
+
+While this how-to focuses on RabbitMQ's AMQP implementation only, RabbitMQ also features implementations of a few other messaging protocols that can be used for special use cases.
+
+* MQTT a lightweight protocol often used to implement pub-sub patterns with high latency mobile devices
 * STOMP a text-based protocol creates compatibility with ApacheMQ
 * statelessd / Hare for high velocity fire and forget messaging
 
@@ -154,7 +177,7 @@ Some money transfers might ask for even more guarantees, so that you will have t
 
 ### Topic exchanges
 
-* `routing.keys` are dot separated
+* `routing.keys` are dot separated, queues define a **binding key**
 * `[A-Za-z0-9]` are the only valid characters besides the dot `.`
 * pattern matching is used to route messages to queues
 * an asterisk `*` matches any characters up to the next dot `.`
@@ -174,7 +197,8 @@ Some money transfers might ask for even more guarantees, so that you will have t
 
 ### Other exchanges
 
-RabbitMQ provides other types of exchanges through plugins to enable special use cases.
+RabbitMQ provides other types of exchanges through plugins to enable special use cases. For example the _consistent-hashing_® exchange to load-balance the number of messages sent to queues in a cluster.
+
 
 ### Handling failure
 
@@ -213,7 +237,7 @@ A **headers exchange** allows for more flexible routing, similar to a _topics ex
 
 The most flexible routing is implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
 
-### Routing keys pattern
+### Routing keys schema
 
 | Applications    | Entities | Events     |
 |:----------------|:---------|:-----------|
@@ -235,23 +259,21 @@ The above list would allow for `routing.keys` like the following:
 * `notifications.person.updated`
 * `admin.person.deleted`
 
-### Binding queues to routing keys
+### Binding queues to the topic exchange
 
-Queues are bound to a pattern or the exact string.
+Queues are bound to the exchange by a _binding key_ which is a pattern or the exact string.
 
 Messages can be delivered to multiple queues that can have one or more consumers each.
 
-
 In this example the consumers _Audits_ and _Notifications_ consume multiple queues.
-
 
 ### Binding examples
 
-| Routing-key                    | Explanation                                 | Consumers                  |
+| Binding key                    | Explanation                                 | Consumers                  |
 |:-------------------------------|:--------------------------------------------|:---------------------------|
 | `registrations.#`              | every message of the `registrations` app    | Customer care              |
 | `identifications.*.successful` | matches all entities with this event        | Download ID, Notifications |
-| `banking.account.created`      | when the exact `routing.key` matches        | Audits, Notifications      |
+| `banking.account.created`      | matches the exact `routing.key`             | Audits, Notifications      |
 | `banking.transfer.*`           | `banking.transfer` of any event type        | Audits, Banking-API        |
 | `#.error`                      | all `error` events of all apps and entities | Alerts                     |
 | `#`                            | all messages                                | Logs                       |
@@ -327,7 +349,7 @@ channel = connection.create_channel
 exchange = Bunny::Exchange.new(
   channel,
   :topic,
-  "first_exchange"
+  "first_topic_exchange"
 )
 
 queue = channel.queue(
@@ -361,7 +383,6 @@ connection = Bunny.new(url)
 connection.start
 
 channel = connection.create_channel
-channel = connection.channel
 ```
 
 #### Create consumer for queue
