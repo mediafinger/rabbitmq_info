@@ -39,7 +39,7 @@ While this how-to focuses on RabbitMQ's AMQP implementation only, RabbitMQ also 
 
 ## Message flow diagram
 
-  ![Simplified message flow diagram](assets/message_flow.png)
+  ![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow.png)
 
 ---
 
@@ -316,7 +316,7 @@ In this example the consumers _Audits_ and _Notifications_ consume multiple queu
 +++
 ### Message flow diagram
 
-![Simplified message flow diagram](assets/message_flow.png)
+![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow.png)
 
 ---
 
