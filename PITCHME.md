@@ -37,6 +37,14 @@ While this how-to focuses on RabbitMQ's AMQP implementation only, RabbitMQ also 
 
 ---
 
+## Message flow diagram
+
+![alt text][message_flow]
+
+[message_flow]: ./message_flow.png "Simplified message flow diagram"
+
+---
+
 ## Publishing messages
 
 When publishing messages, RabbitMQ offers multiple methods to pick from. Each choice is a **trade-off between speed and security** that messages have really been delivered. All options can be combined to find the sweet spot for the type of messages being send on a specific queue.
@@ -306,6 +314,11 @@ In this example the consumers _Audits_ and _Notifications_ consume multiple queu
 | `banking.transfer.*`           | `banking.transfer` of any event type        | Audits, Banking-API        |
 | `#.error`                      | all `error` events of all apps and entities | Alerts                     |
 | `#`                            | all messages                                | Logs                       |
+
++++
+### Message flow diagram
+
+![alt text][message_flow]
 
 ---
 
