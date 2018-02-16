@@ -249,9 +249,16 @@ A **headers exchange** allows for very flexible routing. It matches `key-value` 
 
 ### Topic exchange
 
-Very flexible routing can be implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
+Very flexible routing can be implemented through the **topic exchange.** Pattern matching allows queues to handle all, some or only very specific messages. This way it is capable to emulate the _direct_ and the _fanout exchange_.
+
+The parts of **routing keys** are separated by dots `.`
+
+The **binding keys** implement pattern matching by including asterisk `*` or pound `#` characters.
 
 ### Routing keys schema
+
+Let's assume our routing keys have usually three parts:  
+an _application_, an _entity_ and an _event_:
 
 | Applications    | Entities | Events     |
 |:----------------|:---------|:-----------|
