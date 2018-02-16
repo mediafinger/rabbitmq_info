@@ -241,15 +241,15 @@ When a queued message expires or is rejected by the consumer.
 
 ## Routing examples
 
-In a **fanout exchange** all queues will receive all messages. This burdens the consumers of this queues with handling all kind of messages, when different kinds of messages are sent to such an exchange.
+In a **fanout exchange** all queues will receive all messages. This burdens the consumers of this queues with handling differnt kind of messages.
 
-In a **direct exchange** every queue bound to the exact `routing_key` of a message, will receive this message. When multiple queues are bound to the same `routing_key` the message will be routed to all of these queues. A message will only be removed from the system, when it was delivered in all bound queues.
+In a **direct exchange** every queue bound to an exact `routing_key` of a message, will receive this message. When multiple queues are bound to the same `routing_key` the message will be routed to all of these queues. A message will only be removed from the system, when it was delivered in all bound queues.
 
-A **headers exchange** allows for more flexible routing, similar to a _topics exchange_. Instead of analyzing the routing key, it matches `key-value` pairs of the `headers` `property` of messages.
+A **headers exchange** allows for very flexible routing. It matches `key-value` pairs of the `headers` `property` of messages.
 
 ### Topic exchange
 
-The most flexible routing is implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
+Very flexible routing can be implemented through the **topic exchange.** It is even capable to emulate the _direct_ and the _fanout exchange_. Pattern matching allows queues to handle all, some or only very specific messages. Let's assume our routing keys have usually three parts: an _application_, an _entity_ and an _event_:
 
 ### Routing keys schema
 
