@@ -22,8 +22,8 @@
 
 .reveal section img {
   border: none;
-  height: 90%;
   margin: 15px 15px;
+  padding: 20px;
 }
 
 .reveal th {
