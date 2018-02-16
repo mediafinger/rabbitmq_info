@@ -41,7 +41,7 @@ While this how-to focuses on RabbitMQ's AMQP implementation only, RabbitMQ also 
 
 ![alt text][message_flow]
 
-[message_flow]: ./message_flow.png "Simplified message flow diagram"
+[message_flow]: message_flow.png "Simplified message flow diagram"
 
 ---
 
