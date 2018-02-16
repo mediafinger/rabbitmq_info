@@ -20,6 +20,12 @@
   font-size: 80%;
 }
 
+.reveal section img {
+  border: none;
+  height: 90%;
+  margin: 15px 15px;
+}
+
 .reveal th {
   font-size: 85%;
 }
