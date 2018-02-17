@@ -1,25 +1,25 @@
 # RabbitMQ
 
-A how-to about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
+A presentation to create a mutual understanding about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
 
-RabbitMQ is a high performance message broker based on AMQP. Using the broker architecture it can be scaled independently. Applications use it over client libraries.
+RabbitMQ is a high performance message broker based on AMQP.  Using the broker architecture it can be scaled independently. Applications use it over lightweight client libraries.
 
 +++
 ### Decoupling services
+
+In our current service oriented architecture, the system triggering an event (or receiving it from an external service), would manage large parts of the logic needed to react to this event. It would make calls to different services and endpoints to create or update records. To do this in a resilient way, we setup background workers in each application that handle asynchronous processing and retries.
+
+Using a message bus you would usually inform other systems about events and those implement the logic if and how to react.
 
 Decoupling services by introducing an asynchronous messaging system between them, allows to change and scale systems independently.
 
-Extracting parts of an application to a new service becomes simpler. No URLs have to be adapted, instead adding a new subscriber to a message queue.
-
-Background worker are a subset of subset of messaging systems.
-
 +++
-### Decoupling services
+### Handling high volumes of messages
 
 The message broker distributes messages and can in this process throttle the load towards the message receiving systems. This can reduce failure rate in peak times and at the same time speed up the systems sending messages, as they are no longer blocked by waiting for an answer of a potentially slow system. This can go as far as decoupling your database writes.
 
 +++
-### Decoupling services
+### Broadcasting and replicating messages
 
 The message broker can inform multiple systems about changes and events. This allows to add new functionality seamlessly. It can replicate data and events to data centers in other regions to achieve high availability. This raises the guarantees of message delivery and better performing front end apps for customers around the globe.
 
@@ -33,6 +33,7 @@ The message broker can inform multiple systems about changes and events. This al
 * plugins to extend core-functionality
 * layers of security
 * clients libraries for most modern languages exist
+* background workers are a subset of messaging systems and come included
 
 +++
 ### Alternative Protocols
