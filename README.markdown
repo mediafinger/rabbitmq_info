@@ -2,7 +2,7 @@
 
 A presentation to create a mutual understanding about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
 
-RabbitMQ is a high performance message broker based on AMQP.  Using the broker architecture it can be scaled independently. Applications use it over lightweight client libraries.
+RabbitMQ is a high performance **message broker** based on AMQP. Using the broker architecture it can be scaled independently. Applications use it over lightweight client libraries.
 
 ### Decoupling services
 
