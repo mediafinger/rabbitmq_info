@@ -66,11 +66,11 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 
 ### Publisher confirmation
 
-* lightweight and quick way to ensure a message can be routed and the broker has processed it
-* messages are acknowledged when all queues to which the message has been routed have either delivered the message and received an acknowledgement (if required), or enqueued the message (and persisted it if required)
-* the Publisher should make no assumptions about the exact time a message is acknowledged
+* lightweight and quick way to ensure a message can be routed and the **broker** has processed it
+* messages are confirmed after all queues to which the message has been routed have either accepted the message or enqueued the message and persisted it if required
 * confirmation is send asynchronously
-* if the message can't be routed, a `nack` is returned
+* the publisher should make no assumptions about the exact time a message is confirmed
+* if a message can't be routed, a `nack` is returned
 
 ### High availability (HA) queues
 
