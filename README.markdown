@@ -14,11 +14,15 @@ Decoupling services by introducing an asynchronous messaging system between them
 
 ### Handling high volumes of messages
 
-The message broker distributes messages and can in this process throttle the load towards the message receiving systems. This can reduce failure rate in peak times and at the same time speed up the systems sending messages, as they are no longer blocked by waiting for an answer of a potentially slow system. This can go as far as decoupling your database writes.
+The message broker distributes messages and can in this process throttle the load towards the message receiving systems.
+
+This can reduce failure rate in peak times and at the same time speed up the systems sending messages, as they are no longer blocked by waiting for an answer of a potentially slow system. This can go as far as decoupling your database writes.
 
 ### Broadcasting and replicating messages
 
-The message broker can inform multiple systems about changes and events. This allows to add new functionality seamlessly. It can replicate data and events to data centers in other regions to achieve high availability. This raises the guarantees of message delivery and better performing front end apps for customers around the globe.
+The message broker can inform multiple systems about changes and events. This allows to add new functionality seamlessly.
+
+It can replicate data and events to data centers in other regions to achieve high availability. This raises the guarantees of message delivery and better performing front end apps for customers around the globe.
 
 ### Features and benefits
 
@@ -45,7 +49,7 @@ While this how-to focuses on RabbitMQ's AMQP implementation only, RabbitMQ also 
 
 ## Message flow diagram
 
-![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow.png)
+![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow_broker.png)
 
 ---
 
@@ -302,7 +306,7 @@ In this example the consumers _Audits_ and _Notifications_ consume multiple queu
 
 ### Message flow diagram
 
-![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow.png)
+![Simplified message flow diagram](https://raw.githubusercontent.com/mediafinger/rabbitmq_info/master/assets/message_flow_broker.png)
 
 ---
 
