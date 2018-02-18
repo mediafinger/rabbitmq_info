@@ -86,10 +86,10 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 ### High availability (HA) queues
 
 * a cluster is mandatory to use HA queues
-* messages will be handled on all servers of the cluster that handle the HA queue
+* messages will be handled on all nodes of the cluster that handle the HA queue
 * if a node goes down, the message does still exist on the other nodes
 * this can replace slow persistence to disk in many cases
-* once it is consumed from any node in the cluster, all copies will be removed
+* once a message is consumed from any node in the cluster, all copies will be removed
 * clusters can be connected in different ways, this is a topic of its own
 
 +++
@@ -98,10 +98,10 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 * set `delivery-mode=2` to persist every message before queueing it
 * messages will survive restarts of the whole system
 * define the queues and the exchanges as `durable`
-* _lazy queues_ are similiar, but even slower, as they remove the message from RAM
-* only use _lazy queues_ when you expect extremely long queues, or suffer from unpredictable performance
 * when the system goes down, messages that have not been persisted yet, might still get lost
 * I/O performance of the system must be high, to not slow message handling down
+* _lazy queues_® are similiar, but even slower, as they remove the message from RAM
+* use _lazy queues_ when you expect extremely long queues, or suffer from unpredictable performance
 
 ---
 
@@ -126,7 +126,7 @@ It also skips the `get` pattern, as the performance is worse compared to `consum
 * set a QoS level, to determine how many messages to prefetch, before sending an `ack`
 * consumer counts the number of messages before sending an `ack` when the `prefetch_count` was reached
 * when connection dies, all messages of the current batch are re-queued
-* reject a batch of `multiple` messages by sending a `nack`, they will be re-queued
+* reject a batch of `multiple` messages by sending a `basic.nack`®, they will be re-queued
 * lightweight system that allows for high throughput rates
 * needs benchmarking to find the perfect prefect_count per queue
 
@@ -135,7 +135,7 @@ It also skips the `get` pattern, as the performance is worse compared to `consum
 
 * the default setting is to send an automatic `ack` after a message was sent
 * change it to `manual_ack=true` to send the `ack` after processing the message
-* send a `basic.nack`® or `basic.reject` to reject and delete a message
+* send a `basic.nack` or `basic.reject` to reject and delete a message
 * reject a message with `requeue=true` to redeliver it
 
 ---
@@ -177,13 +177,13 @@ Nevertheless the same tool might expect to always be immediately informed about 
 +++
 ### Money transfers
 
-When a redundant cluster is available, using _HA queues_ with _delivery confirmation_ and _dead-letter queues_ could be good choice.
+When a redundant cluster is available, using _HA queues_ with _delivery confirmation_ and _dead-letter exchanges_ is a secure choice.
 
-Some money transfers might ask for even more guarantees, so that you will have to add _persistence of messages to disk_ into the mix. This should ensure that all messages can be recovered even in the case of catastrophic failure.
+As money transfers need all possible guarantees, you will want to add _persistence of messages to disk_ into the mix. This ensures all messages can be recovered even in the case of catastrophic failure.
 
 ---
 
-## Exchange routing
+## Broker & Exchange routing
 
 * to connect publishers and consumers at least one exchange has to be declared
 * exchange names consist of letters, digits, hyphen, underscore, period, or colon `[A-Za-z0-9-_.:]`
@@ -198,7 +198,7 @@ Some money transfers might ask for even more guarantees, so that you will have t
 * the empty string `''` is a valid queue name
 * has the queue name been omitted on declaration, a new queue with a generated unique name will be created
 * queues can be declared to be `exclusive` and will be deleted when the connection closes
-* to enhance performance, multiple consumers can subscribe to a queue, messages are then distributed in a _round robin_ way, so that each consumer will process a part of all messages, which helps to keep queues short
+* to enhance performance, multiple **consumers** can subscribe to a queue, messages are then distributed in a _round robin_ way, so that each consumer will process a part of all messages, which helps to keep queues short
 
 
 +++
@@ -272,10 +272,10 @@ When a published message can not be routed by the broker.
 When a queued message expires or is rejected by the consumer.
 
 * define an `x-dead-letter-exchange` when declaring the queue
-* the message headers will be changed
 * messages stay in the dead-letter queue for inspection, unless it they expire or handled by a consumer
 * handling processing failure with dead-letter queues is simpler and safer than burdening the consumer client with it
-* having only message of one type in the queue makes error handling easier
+* having only messages of one type in the queue makes error handling easier
+* the message headers will be changed
 * could be combined with a delayed retry strategy: https://github.com/rabbitmq/rabbitmq-delayed-message-exchange
 
 ---
@@ -550,6 +550,8 @@ channel.close
 ---
 
 ## Monitoring and Alerting
+
+TODO:
 
 * `rabbitmqctl list_queues` alert on queue length threshold
 * use API to compare current queue setup with expected configuration
