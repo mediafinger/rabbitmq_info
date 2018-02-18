@@ -69,15 +69,18 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 
 * fire and forget, messages might get lost, without informing the publisher about it
 * set `mandatory=true` to get messages returned when they are not routable, returned messages have to be handled
+* set `immediate=true` to get messages returned when no queue is ready to consume them, returned messages have to be handled
 
 +++
-### Publisher confirmation
+### Publisher confirmation®
 
 * lightweight and quick way to ensure a message can be routed and the **broker** has processed it
-* messages are confirmed after all queues to which the message has been routed have either accepted the message or enqueued the message and persisted it if required
+* an unroutable _mandatory_ or an undeliverable _immediate_ message is confirmed right after the `basic.return`
+* a _transient_ message is confirmed the moment it is _enqueued_
+* a _persistent_ message is confirmed when it is _persisted_ to disk
 * confirmation is send asynchronously
 * the publisher should make no assumptions about the exact time a message is confirmed
-* if a message can't be routed, a `nack` is returned
+* if the broker runs into issues, it will `basic.nack` messages
 
 +++
 ### High availability (HA) queues
@@ -130,8 +133,9 @@ It also skips the `get` pattern, as the performance is worse compared to `consum
 +++
 ### Delivery confirmation, (manual) ack, slowest but most secure
 
-* send an automatic `ack` when a message was received, this is the default setting
+* the default setting is to send an automatic `ack` after a message was sent
 * change it to `manual_ack=true` to send the `ack` after processing the message
+* send a `basic.nack`® or `basic.reject` to reject and delete a message
 * reject a message with `requeue=true` to redeliver it
 
 ---
@@ -159,7 +163,9 @@ If it's not about pure notifications, but information that has to reach the cust
 
 A customer changes his personal data on one system and it has to inform other application about it. In this case the choice of methods depends heavily on how important it is for the other applications to have the latest data.
 
-An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer. You could send messages with _publishing confirmation_ and no further guarantees.
+An invoicing tool that sends out emails, might be ok with eventual consistency of the real world address of the customer.
+
+The service informing about the data change could send messages with _publishing confirmation_ and no further guarantees.
 
 +++
 #### Data changes
@@ -198,12 +204,12 @@ Some money transfers might ask for even more guarantees, so that you will have t
 +++
 ### Direct exchanges
 
-* match the `routing_key` of messages to the queues bound to the same key
-* `[A-Za-z0-9-_.:]` are the only valid characters for `routing_keys` (TODO: validate this!)
+* match the `routing_key` of messages to the **binding key** of queues
 * the string is matched for equality, no pattern matching
+* `[A-Za-z0-9-_.:]` are the only valid characters for `routing_keys` (TODO: validate this!)
 * multiple queues can be bound to the same `routing_key`
 * a queue can be bound to multiple `routing_keys`
-* every queue bound to a `routing_key` will receive all messages sent with this `routing_key`
+* every queue will receive all messages matching the **binding key**
 * _direct exchanges_ are a good choice for routing reply messages
 
 +++
@@ -218,10 +224,10 @@ Some money transfers might ask for even more guarantees, so that you will have t
 ### Topic exchanges
 
 * `routing.keys` are dot separated, queues define a **binding key**
-* `[A-Za-z0-9]` are the only valid characters besides the dot `.`
 * pattern matching is used to route messages to queues
 * an asterisk `*` matches any characters up to the next dot `.`
 * the pound `#` matches any characters including dots `.`
+* `[A-Za-z0-9]` are the only valid characters besides the dot `.`
 * emulate _direct exchange_ queues by binding to the exact `routing.key`
 * emulate _fanout exchange_ queues by binding to any routing.key through `#`
 * _topic exchanges_ are very flexible and a good future-proof choice
@@ -247,6 +253,8 @@ RabbitMQ provides other types of exchanges through plugins to enable special use
 
 TODO: retries and final failure
 
+https://derickbailey.com/2016/03/28/dealing-with-dead-letters-and-poison-messages-in-rabbitmq/
+
 +++
 #### Alternate exchanges
 
@@ -259,14 +267,16 @@ When a published message can not be routed by the broker.
 * messages stay in the `alternate-exchange` queue(s) for inspection, unless a consumer is defined
 
 +++
-#### Dead-letter exchanges
+#### Dead-letter exchanges®
 
 When a queued message expires or is rejected by the consumer.
 
 * define an `x-dead-letter-exchange` when declaring the queue
 * the message headers will be changed
-* messages stay in the dead-letter queue for inspection, unless it they expire or a consumer is defined
-* handling processing failure with dead-letter queues is simpler than burdening the consumer client with it
+* messages stay in the dead-letter queue for inspection, unless it they expire or handled by a consumer
+* handling processing failure with dead-letter queues is simpler and safer than burdening the consumer client with it
+* having only message of one type in the queue makes error handling easier
+* could be combined with a delayed retry strategy: https://github.com/rabbitmq/rabbitmq-delayed-message-exchange
 
 ---
 
@@ -365,19 +375,18 @@ Together the three frames represent a full AMQP message.
 
 | Property         | Type   | Used by      | Use case                                                                  |
 |:-----------------|:-------|:-------------|:--------------------------------------------------------------------------|
-| `correlation_id` | String | Application  | typically used to reference a message_id when sending a response          |
+| `correlation_id` | String | Application  | typically used to reference a request or message when sending a response  |
 | `delivery-mode`  | 1 or 2 | RabbitMQ     | 1 = keep message in memory, 2 = persist to disk                           |
 | `expiration`     | String | RabbitMQ     | one way to set an expiration date, a timestamp in seconds but as String   |
 | `headers`        | Hash   | Rabbit & App | key-value table to store any additional metadata, can be used for routing |
+| `reply_to`       | String | RabbitMQ     | commonly used to name a callback queue                                    |
 
 +++
 ### Advanced Properties
 
-Usually you don't want to change the following properties.
-
 | Property   | Type   | Used by  | Use case                                                         |
 |:-----------|:-------|:---------|:-----------------------------------------------------------------|
-| `priority` | 0..9   | RabbitMQ | 0 has highest priority, don't set or manipulate the value        |
+| `priority` | 0..9   | RabbitMQ | 0 has highest priority, usage is a bit tricky                    |
 | `user_id`  | String | RabbitMQ | identify message was sent by logged-in user, don't manipulate it |
 
 +++
@@ -385,15 +394,22 @@ Usually you don't want to change the following properties.
 
 They payload is contained in the **body frame.** When the size of the payload exceeds the maximum size of a message frame, it will be split over multiple **body frames**. The form of the payload is described by the `content-type` and `content-encoding` _header properties_.
 
-Consumers should decode and deserialize the message body, to make it easier for the application to handle messages.
+Consumers clients should decode and deserialize the message body, to make it easier for the application to handle messages.
 
 ---
 
 ## Code Examples
 
-All code examples are written in Ruby and `require "bunny"`.
+To try those examples you'll need a running RabbitMQ broker. The examples are written in Ruby and `require "bunny"`. You can always use **RabbitMQ's management UI** to check the status of your broker and queues:
 
-They also need a running RabbitMQ broker.
+http://localhost:15672/ (user: guest, password: guest)
+
+Instead of using bunny directly, you could chose to implement a **framework** like:
+
+* hutch: https://github.com/gocardless/hutch
+* sneakers: https://github.com/jondot/sneakers/wiki
+
+But those are not covered in here.
 
 +++
 ### Setting up a topic exchange and binding queues to it
@@ -533,16 +549,32 @@ channel.close
 
 ---
 
+## Monitoring and Alerting
+
+* `rabbitmqctl list_queues` alert on queue length threshold
+* use API to compare current queue setup with expected configuration
+
+---
+
 ## Cluster setup
 
 TODO:
 
-* setting up multipled nodes
+* multipled nodes with low-maintenance / automatic synchronous replication
 * high availability (HA) queues
 * federated exchanges
 * benefits
 * drawbacks
 * configuration options
+
+---
+
+## Best Practices
+
+TODO:
+
+* load JSON config file over API
+
 
 ---
 
