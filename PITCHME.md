@@ -2,6 +2,8 @@
 
 A presentation to create a mutual understanding about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
 
+AMQP was defined and implemented for the first time over ten years ago. Since then it expanded beyond the finance and banking sector it originated in, into many different industries.
+
 RabbitMQ is a high performance **message broker** based on AMQP. Using the broker architecture it can be scaled independently. Applications use it over lightweight client libraries.
 
 +++
@@ -100,8 +102,8 @@ This list skips the Transaction pattern RabbitMQ implements (AMQP TX), as the al
 * define the queues and the exchanges as `durable`
 * when the system goes down, messages that have not been persisted yet, might still get lost
 * I/O performance of the system must be high, to not slow message handling down
-* _lazy queues_® are similiar, but even slower, as they remove the message from RAM
 * use _lazy queues_ when you expect extremely long queues, or suffer from unpredictable performance
+* _lazy queues_® are slower, as they remove the messages from RAM
 
 ---
 
@@ -127,6 +129,7 @@ It also skips the `get` pattern, as the performance is worse compared to `consum
 * consumer counts the number of messages before sending an `ack` when the `prefetch_count` was reached
 * when connection dies, all messages of the current batch are re-queued
 * reject a batch of `multiple` messages by sending a `basic.nack`®, they will be re-queued
+* this can result in messages being send multiple times
 * lightweight system that allows for high throughput rates
 * needs benchmarking to find the perfect prefect_count per queue
 
@@ -251,9 +254,10 @@ RabbitMQ provides other types of exchanges through plugins to enable special use
 +++
 ### Handling failure
 
-TODO: retries and final failure
+TODO:
 
-https://derickbailey.com/2016/03/28/dealing-with-dead-letters-and-poison-messages-in-rabbitmq/
+* retries and final failure
+* dead-letter boxes and poisonous messages https://derickbailey.com/2016/03/28/dealing-with-dead-letters-and-poison-messages-in-rabbitmq/
 
 +++
 #### Alternate exchanges
@@ -576,6 +580,11 @@ TODO:
 TODO:
 
 * load JSON config file over API
+* use one connection per process
+* use one channel for each thread
+* use separate connections for publish and consume
+* reuse connections, keep connection:channel count low
+* keep queues short, if not possible use lazy queues
 
 
 ---
