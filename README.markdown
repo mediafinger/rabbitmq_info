@@ -1,6 +1,6 @@
 # RabbitMQ
 
-A presentation to create a mutual understanding about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
+An introduction to create a mutual understanding about **publishing**, **routing** and **consuming** messages with RabbitMQ and the Advanced Message Queueing Protocol (AMQP).
 
 AMQP was defined and implemented for the first time over ten years ago. Since then it expanded beyond the finance and banking sector it originated in, into many different industries.
 
